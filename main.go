@@ -14,7 +14,7 @@ import (
 
 func main() {
 	go low()
-	web.SetStaticPath("/key_event/dist", "static")
+	web.SetStaticPath("/key_event/dist", "static/web")
 	web.InsertFilter("*", web.BeforeRouter, cors.Allow(&cors.Options{
 		AllowAllOrigins:  true,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -22,7 +22,8 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
 		AllowCredentials: true,
 	}))
-	web.Router("/", &controllers.MainController{})
+	web.Router("/", &controllers.AllController{})
+	web.Router("/statistics", &controllers.StatisticsController{})
 	web.Run()
 }
 
@@ -146,8 +147,6 @@ func low() {
 				str = "-"
 			}
 
-			fmt.Println(str, ev.Rawcode)
-
 			if keyCounts[ev.Rawcode] != nil {
 				keyCounts[ev.Rawcode].Count++
 			} else {
@@ -165,7 +164,6 @@ func low() {
 			if err != nil {
 				println(err)
 			}
-
 		}
 	}
 }

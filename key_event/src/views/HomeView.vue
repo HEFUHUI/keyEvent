@@ -2,28 +2,42 @@
   <div class="home">
     <div class="keyBored">
         <h2 >按键排行榜</h2>
-      <div class="item" v-for="i in keyData" :key="i.name">
+      <key-statistics :keyEvent="i" class="item" v-for="i in keyData" :key="i.name">
         <h2>
           <el-tag>{{i.name}}</el-tag>
         </h2>
         <span>{{i.count}}</span>
-      </div>
+      </key-statistics>
     </div>
     <key-bored-vue :data="keyData"></key-bored-vue>
+    <div class="total">
+      总敲击次数：<b>{{ total }}</b>
+    </div>
+    
   </div>
 </template>
 
 <script>
 import KeyBoredVue from '../components/KeyBored.vue';
+import KeyStatistics from "../components/KeyStatistics.vue"
 
 export default {
   name: 'HomeView',
   components:{
-    KeyBoredVue
+    KeyBoredVue,
+    KeyStatistics
   },
   data() {
     return {
       keyData: []
+    }
+  },
+  computed:{
+    total(){
+      const countList = this.keyData.map(i=>i.count);
+      let t = 0;
+      countList.forEach(count => t+=count)
+      return t;
     }
   },
   methods:{
@@ -77,5 +91,9 @@ export default {
 }
 .home{
   display: flex;
+}
+.total{
+  padding: 10px;
+  color: var(--el-color-primary);
 }
 </style>
