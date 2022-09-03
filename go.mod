@@ -1,4 +1,4 @@
-module ketEvent
+module keyEvent
 
 go 1.19
 

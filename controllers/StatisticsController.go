@@ -3,17 +3,19 @@ package controllers
 import (
 	"encoding/json"
 	"os"
+	"path"
 
 	"github.com/beego/beego/v2/server/web"
 )
 
 type StatisticsController struct {
+	Dir string
 	web.Controller
 }
 
 func (c *StatisticsController) Get() {
 	key := c.Ctx.Request.URL.Query().Get("key")
-	files, err := os.ReadDir("./keys")
+	files, err := os.ReadDir(c.Dir)
 	if err != nil {
 		println(err.Error())
 		return
@@ -23,7 +25,7 @@ func (c *StatisticsController) Get() {
 		kcs := make(map[string]*KeyCount)
 		fileName := file.Name()
 		if fileName[len(fileName)-9:] == "-key.json" {
-			OFile, err := os.ReadFile("./keys/" + fileName)
+			OFile, err := os.ReadFile(path.Join(c.Dir, fileName))
 			if err != nil {
 				continue
 			}

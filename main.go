@@ -3,18 +3,22 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"ketEvent/controllers"
-	"os"
-	"time"
-
 	"github.com/beego/beego/v2/server/web"
 	"github.com/beego/beego/v2/server/web/filter/cors"
 	hook "github.com/robotn/gohook"
+	"keyEvent/controllers"
+	"log"
+	"os"
+	"os/user"
+	"path"
+	"time"
 )
 
+var LocalDataDir string
+
 func main() {
+	getLocalDataDir()
 	go low()
-	web.SetStaticPath("/key_event/dist", "static/web")
 	web.InsertFilter("*", web.BeforeRouter, cors.Allow(&cors.Options{
 		AllowAllOrigins:  true,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -22,19 +26,30 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
 		AllowCredentials: true,
 	}))
-	web.Router("/", &controllers.AllController{})
-	web.Router("/statistics", &controllers.StatisticsController{})
-	web.Run()
+	web.Router("/", &controllers.AllController{
+		Dir: LocalDataDir,
+	})
+	web.Router("/statistics", &controllers.StatisticsController{
+		Dir: LocalDataDir,
+	})
+	web.Run(":8888")
+}
+
+func getLocalDataDir() {
+	currentUser, err := user.Current()
+	if err != nil {
+		log.Fatal("获取当前用户失败", err.Error())
+	}
+	LocalDataDir = path.Join(currentUser.HomeDir, "AppData", "Local", "keyEvent")
+	err = os.MkdirAll(LocalDataDir, os.ModePerm)
+	if err != nil {
+		log.Fatal("创建本地数据目录失败", err.Error())
+	}
 }
 
 func low() {
-	// 判断keys 文件夹是否存在，如果不存在则创建
-	_, err := os.Stat("keys")
-	if os.IsNotExist(err) {
-		os.Mkdir("keys", os.ModePerm)
-	}
 	today := time.Now().Format("2006-01-02")
-	keysFile := "./keys/" + today + "-key.json"
+	keysFile := path.Join(LocalDataDir, today+"-key.json")
 	file, err := os.ReadFile(keysFile)
 	var keyCounts map[uint16]*controllers.KeyCount
 	if err == nil {

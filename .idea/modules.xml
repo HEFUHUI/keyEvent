@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/ketEvent.iml" filepath="$PROJECT_DIR$/.idea/ketEvent.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/keyEvent.iml" filepath="$PROJECT_DIR$/.idea/keyEvent.iml" />
     </modules>
   </component>
 </project>

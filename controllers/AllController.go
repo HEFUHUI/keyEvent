@@ -2,12 +2,15 @@ package controllers
 
 import (
 	"encoding/json"
+	"log"
 	"os"
+	"path"
 
 	"github.com/beego/beego/v2/server/web"
 )
 
 type AllController struct {
+	Dir string
 	web.Controller
 }
 
@@ -33,8 +36,9 @@ type KeyCount struct {
 // }
 
 func (c *AllController) Get() {
+	log.Println(c.Dir)
 	// 读取keys下的所有文件
-	files, err := os.ReadDir("./keys")
+	files, err := os.ReadDir(c.Dir)
 	if err != nil {
 		println(err.Error())
 		return
@@ -44,7 +48,7 @@ func (c *AllController) Get() {
 		kcs := make(map[uint16]*KeyCount)
 		fileName := file.Name()
 		if fileName[len(fileName)-9:] == "-key.json" {
-			OFile, err := os.ReadFile("./keys/" + fileName)
+			OFile, err := os.ReadFile(path.Join(c.Dir, fileName))
 			if err != nil {
 				continue
 			}
