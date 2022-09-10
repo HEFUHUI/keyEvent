@@ -66,6 +66,7 @@ func low() {
 	for ev := range evChan {
 		if ev.Kind == 5 {
 			str := string(ev.Rawcode)
+			log.Println(ev.Rawcode)
 			if ev.Rawcode == 112 {
 				str = "F1"
 			} else if ev.Rawcode == 113 {

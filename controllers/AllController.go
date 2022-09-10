@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"log"
 	"os"
 	"path"
 
@@ -36,8 +35,6 @@ type KeyCount struct {
 // }
 
 func (c *AllController) Get() {
-	log.Println(c.Dir)
-	// 读取keys下的所有文件
 	files, err := os.ReadDir(c.Dir)
 	if err != nil {
 		println(err.Error())
