@@ -2,7 +2,6 @@ const {
   defineConfig
 } = require('@vue/cli-service')
 
-const isElectron = process.env.VUE_APP_PLATFORM === 'electron'
 module.exports = defineConfig({
   transpileDependencies: true,
   pluginOptions: {
@@ -17,7 +16,7 @@ module.exports = defineConfig({
         });
       },
       preload: './src/preload.js',
-      customFileProtocol:isElectron ? './' : null,
+      customFileProtocol: './',
       builderOptions: {
         "productName": "键盘监听器", //项目名 这也是生成的exe文件的前缀名
         "appId": "top.hzfui.key", //包名

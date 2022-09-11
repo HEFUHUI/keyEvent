@@ -1,5 +1,5 @@
 <template>
-  <div class="key-bored" :style="{backgroundColor: light ? 'black' : 'white',color: (light ? 'white' : 'black' ) + '!important'}" ref="keyBored">
+  <div class="key-bored" :style="{color: (light ? 'white' : 'black' ) + '!important'}" ref="keyBored">
     <el-form inline>
       <el-form-item label="灯光效果">
         <el-switch v-model="light"></el-switch>
@@ -24,7 +24,7 @@
      <el-slider :max="6" style="width: 30rem" :show-tooltip="false" :step="0.1" v-model="itemWidth" :min="2"></el-slider>
     </div>
     <el-dialog destroy-on-close append-to-body v-model="visible" :title="`按键${mapper.keyName[curr_key.code]}的使用统计`">
-      <div id="container"></div>
+      <div id="container" v-if="visible"></div>
     </el-dialog>
   </div>
 </template>
@@ -44,14 +44,6 @@ export default {
         keyCode:{}
       })
     },
-    // light:{
-    //   type:Boolean,
-    //   default:false
-    // },
-    // lightSpeed:{
-    //   type:Number,
-    //   default:500
-    // }
   },
   data() {
     return {
@@ -73,14 +65,6 @@ export default {
             {code: "116"}, {code: "117"}, {code: "118"},
             {code: "119"}, {code: "120"}, {code: "121"},
             {code: "122"}, {code: "123"},
-            // 14: {code: ""},
-            // 15: {code: '44'},
-            // 16: {code: "145"}},
-            // 17: {code: "19"}},
-            // 18: {code: '174'},
-            // 19: {code: "181"}},
-            // 20: {code: "179"}},
-            // 21: {code: "175"}}
           ],
           [
             {code: "192"}, {code: "49"}, {code: "50"}, {code: "51"},
@@ -108,7 +92,8 @@ export default {
           ]
         ],
       },
-      itemWidth: 3.0
+      itemWidth: 3.0,
+      chart: null
     };
   },
   computed: {},
@@ -179,12 +164,11 @@ export default {
       this.curr_key = key;
       await this.fetchKeyDetail(this.mapper.keyCode[key.code] || key.code);
       this.visible = true;
-      const itv = setInterval(() => {
+      setTimeout(() => {
         if (window.container) {
           this.draw();
-          clearInterval(itv);
         }
-      })
+      }, 100);
     },
     async fetchKeyDetail(raw_code) {
       this.keyDetail = (
@@ -193,19 +177,22 @@ export default {
     },
     draw() {
       const data = Object.keys(this.keyDetail).map(date => new Object({year: date, value: this.keyDetail[date]}))
-      const chart = new Chart({
+      if(this.chart){
+        this.chart.destroy();
+      }
+      this.chart = new Chart({
         container: "container",
         autoFit: true,
         height: 500,
         width: 500,
       });
-      chart.data(data);
-      chart.tooltip({
+      this.chart.data(data);
+      this.chart.tooltip({
         showMarkers: false,
       });
-      chart.interval().position("year*value");
-      chart.interaction("element-active");
-      chart.render();
+      this.chart.interval().position("year*value");
+      this.chart.interaction("element-active");
+      this.chart.render();
       this.isDraw = true;
     },
     down(e) {

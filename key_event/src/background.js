@@ -1,6 +1,6 @@
 'use strict'
 
-import {app, BrowserWindow, dialog, Menu, protocol, Tray} from 'electron'
+import {app, BrowserWindow, dialog, Menu, protocol, Tray,ipcMain} from 'electron'
 import {createProtocol} from 'vue-cli-plugin-electron-builder/lib'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
@@ -20,15 +20,15 @@ async function createAboutWindow(){
         webPreferences:{
         }
     })
-    await aboutWin.loadURL('https://bafybeiffaktrgsjkbere23fkq43jjq5ao2rdpqromcdkdgvaeiwp57kkka.ipfs.4everland.io')
+    await aboutWin.loadURL('https://kv4sf-qaaaa-aaaag-aat7q-cai.ic0.app')
 }
 
 async function createWindow() {
-    Menu.setApplicationMenu(null)
     const win = new BrowserWindow({
         width: 1200,
         height: 900,
         webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: true,
             contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION
         }
@@ -53,6 +53,23 @@ async function createWindow() {
     }).on("error", (err) => {
         dialog.showErrorBox("发生错误", err.message)
     })
+    // 获取可执行文件位置
+    const ex=process.execPath;
+    ipcMain.on('openAutoStart',()=>{
+        app.setLoginItemSettings({
+            openAtLogin: true,
+            path: ex,
+            args: []
+        });
+    });
+    ipcMain.on('closeAutoStart',()=>{
+        app.setLoginItemSettings({
+            openAtLogin: false,
+            path: ex,
+            args: []
+        });
+    })
+
 }
 
 function tray() {
@@ -62,6 +79,11 @@ function tray() {
                 createAboutWindow().catch(err=>{
                     dialog.showErrorBox("发生错误", err.message)
                 })
+            }
+        },
+        {
+            label: "开发者工具",click:()=>{
+                BrowserWindow.getFocusedWindow().webContents.openDevTools()
             }
         },
         {

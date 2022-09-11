@@ -21,10 +21,18 @@
     <div class="container">
       <div>
         <el-button @click="showRanking = !showRanking">排行榜</el-button>
+        <el-button @click="settingVisible = true" icon="el-icon-setting">设置</el-button>
         <el-divider></el-divider>
-        <key-bored-vue :mapper="mapper" :lightSpeed="lightSpeed" :light="light" :data="keyData"></key-bored-vue>
+        <key-bored-vue :mapper="mapper" :data="keyData"></key-bored-vue>
       </div>
     </div>
+    <el-dialog title="设置" v-model="settingVisible">
+      <el-form>
+        <el-form-item label="开机自启动">
+          <el-switch v-model="autoStart"></el-switch>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
   </div>
 </template>
 
@@ -38,12 +46,12 @@ export default {
   },
   data() {
     return {
+      settingVisible:false,
+      autoStart: false,
       keyData: [],
-
       keyDetail: {},
       curr_key: {},
       showRanking: false,
-
       mapper: {
         keyName: {
           192: "`", 49: "1", 50: "2", 51: "3", 52: "4", 53: "5", 54: "6", 55: "7", 56: "8", 57: "9", 48: "0",
@@ -62,6 +70,16 @@ export default {
           "16-2": 161,
           "91-1": 91,
         }
+      }
+    }
+  },
+  watch:{
+    autoStart(val){
+      localStorage.setItem("autoStart",val);
+      if(val){
+        window.hzfui.openAutoOpen()
+      }else{
+        window.hzfui.closeAutoOpen()
       }
     }
   },
@@ -96,6 +114,7 @@ export default {
   },
   created(){
     this.fetchData();
+    this.autoStart = localStorage.getItem("autoStart") === "true";
   }
 }
 </script>
