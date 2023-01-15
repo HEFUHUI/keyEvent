@@ -171,9 +171,10 @@ export default {
       }, 100);
     },
     async fetchKeyDetail(raw_code) {
-      this.keyDetail = (
-          await this.axios.get(`/statistics?key=${raw_code}`)
+      this.dir = (
+          await this.axios.get(``)
       ).data;
+      this.keyDetail = await window.hzfui.readKeyDetail(this.dir, raw_code);
     },
     draw() {
       const data = Object.keys(this.keyDetail).map(date => new Object({year: date, value: this.keyDetail[date]}))

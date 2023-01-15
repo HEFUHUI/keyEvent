@@ -21,6 +21,7 @@
     <div class="container">
       <div>
         <el-button @click="showRanking = !showRanking">排行榜</el-button>
+        <key-shortcut :height="height" :mapper="mapper"></key-shortcut>
         <el-button @click="settingVisible = true" icon="el-icon-setting">设置</el-button>
         <el-divider></el-divider>
         <key-bored-vue :mapper="mapper" :data="keyData"></key-bored-vue>
@@ -38,10 +39,12 @@
 
 <script>
 import KeyBoredVue from '../components/KeyBored.vue';
+import KeyShortcut from "@/components/KeyShortcut.vue";
 
 export default {
   name: 'HomeView',
   components:{
+    KeyShortcut,
     KeyBoredVue,
   },
   data() {
@@ -96,7 +99,8 @@ export default {
   },
   methods:{
     async fetchData(){
-      const data = (await this.axios.get("")).data
+      const dir = (await this.axios.get("")).data
+      const data = await window.hzfui.readKeys(dir);
       // golang记录的时候，没有记录到raw_code，所以这里需要手动添加
       Object.keys(data).forEach(key => {
         data[key].raw_code = key
@@ -108,9 +112,9 @@ export default {
 
   },
   mounted(){
-    setInterval(() => {
-      this.fetchData();
-    }, 1000);
+    // setInterval(() => {
+    //   this.fetchData();
+    // }, 1000);
   },
   created(){
     this.fetchData();

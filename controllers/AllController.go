@@ -1,10 +1,6 @@
 package controllers
 
 import (
-	"encoding/json"
-	"os"
-	"path"
-
 	"github.com/beego/beego/v2/server/web"
 )
 
@@ -17,6 +13,11 @@ type KeyCount struct {
 	RawCode uint16 `json:"raw_code"`
 	Name    string `json:"name"`
 	Count   uint64 `json:"count"`
+	Using   int64  `json:"using"` // 按键使用时长 单位毫秒
+	Other   string `json:"other"`
+}
+type ShortcutKey struct {
+	Count uint64 `json:"count"`
 }
 
 // func (c *MainController) Get() {
@@ -35,32 +36,34 @@ type KeyCount struct {
 // }
 
 func (c *AllController) Get() {
-	files, err := os.ReadDir(c.Dir)
-	if err != nil {
-		println(err.Error())
-		return
-	}
-	keyCounts := make(map[uint16]*KeyCount)
-	for _, file := range files {
-		kcs := make(map[uint16]*KeyCount)
-		fileName := file.Name()
-		if fileName[len(fileName)-9:] == "-key.json" {
-			OFile, err := os.ReadFile(path.Join(c.Dir, fileName))
-			if err != nil {
-				continue
-			}
-			json.Unmarshal(OFile, &kcs)
-		}
-		// 合并
-		for k, v := range kcs {
-			if _, ok := keyCounts[k]; ok {
-				keyCounts[k].Count += v.Count
-			} else {
-				keyCounts[k] = v
-			}
-		}
-	}
-	c.JSONResp(keyCounts)
+	c.Ctx.WriteString(c.Dir)
+	//files, err := os.ReadDir(c.Dir)
+	//if err != nil {
+	//	println(err.Error())
+	//	return
+	//}
+	//keyCounts := make(map[uint16]*KeyCount)
+	//for _, file := range files {
+	//	kcs := make(map[uint16]*KeyCount)
+	//	fileName := file.Name()
+	//	log.Println(fileName)
+	//	if fileName[len(fileName)-9:] == "-key.json" {
+	//		OFile, err := os.ReadFile(path.Join(c.Dir, fileName))
+	//		if err != nil {
+	//			continue
+	//		}
+	//		json.Unmarshal(OFile, &kcs)
+	//	}
+	//	// 合并
+	//	for k, v := range kcs {
+	//		if _, ok := keyCounts[k]; ok {
+	//			keyCounts[k].Count += v.Count
+	//		} else {
+	//			keyCounts[k] = v
+	//		}
+	//	}
+	//}
+	//c.JSONResp(keyCounts)
 
 	// file, err := os.ReadFile("./key.json")
 	// if err != nil {

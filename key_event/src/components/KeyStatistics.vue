@@ -33,9 +33,10 @@ export default {
   mounted() {},
   methods: {
     async fetchData() {
-      this.data = (
-        await this.axios.get(`/statistics?key=${this.keyEvent.raw_code}`)
+      this.dir = (
+        await this.axios.get(``)
       ).data;
+      this.data = await window.hzfui.readKeyDetail(this.dir, this.keyEvent.raw_code);
     },
     draw() {
       const data = Object.keys(this.data).map(date=> new Object({year: date, value: this.data[date]}))

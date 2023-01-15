@@ -10,6 +10,7 @@ import axios from './plugins/axios'
 
 const app = createApp(App)
 installElementPlus(app)
+app.provide('$axios', axios)
 app.use(store)
 .use(VueAxios, axios)
 .use(router).mount('#app')

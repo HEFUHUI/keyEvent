@@ -6,6 +6,7 @@ import (
 	"github.com/beego/beego/v2/server/web"
 	"github.com/beego/beego/v2/server/web/filter/cors"
 	hook "github.com/robotn/gohook"
+	"io"
 	"keyEvent/controllers"
 	"log"
 	"os"
@@ -13,6 +14,22 @@ import (
 	"path"
 	"time"
 )
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	today := time.Now().Format("2006-01-02")
+
+	logDir := path.Join(LocalDataDir, "keyEvent_log")
+	err := os.MkdirAll(logDir, os.ModePerm)
+	// 设置日志输出到文件
+	LocalDataDir = path.Join(logDir, today+"-ke.log")
+	logFile, err := os.OpenFile(LocalDataDir, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalln("打开日志文件失败：", err)
+	}
+	writer := io.MultiWriter(os.Stdout, logFile)
+	log.SetOutput(writer)
+}
 
 var LocalDataDir string
 
@@ -40,7 +57,8 @@ func getLocalDataDir() {
 	if err != nil {
 		log.Fatal("获取当前用户失败", err.Error())
 	}
-	LocalDataDir = path.Join(currentUser.HomeDir, "AppData", "Local", "keyEvent")
+	LocalDataDir = path.Join(currentUser.HomeDir, "AppData", "Local")
+	//LocalDataDir = "./keys"
 	err = os.MkdirAll(LocalDataDir, os.ModePerm)
 	if err != nil {
 		log.Fatal("创建本地数据目录失败", err.Error())
@@ -48,25 +66,71 @@ func getLocalDataDir() {
 }
 
 func low() {
+	var err error
 	today := time.Now().Format("2006-01-02")
-	keysFile := path.Join(LocalDataDir, today+"-key.json")
+	keysDir := path.Join(LocalDataDir, "keyEvent")
+	shortcutKeysDir := path.Join(LocalDataDir, "keyEvent_ShortcutKey")
+	err = os.MkdirAll(keysDir, os.ModePerm)
+	if err != nil {
+		log.Fatal("创建本地数据目录失败，按键统计", err.Error())
+	}
+	err = os.MkdirAll(shortcutKeysDir, os.ModePerm)
+	if err != nil {
+		log.Fatal("创建本地数据目录失败，快捷键统计", err.Error())
+	}
+	keysFile := path.Join(keysDir, today+"-key.json")
+	shortcutKeysFile := path.Join(shortcutKeysDir, today+"-shortcutKey.json")
 	file, err := os.ReadFile(keysFile)
+	shortcutKeyFile, err := os.ReadFile(shortcutKeysFile)
 	var keyCounts map[uint16]*controllers.KeyCount
+	var shortcutKeys map[string]*controllers.ShortcutKey
 	if err == nil {
 		_ = json.Unmarshal(file, &keyCounts)
+		_ = json.Unmarshal(shortcutKeyFile, &shortcutKeys)
 		if keyCounts == nil {
 			keyCounts = make(map[uint16]*controllers.KeyCount)
 		}
+		if shortcutKeys == nil {
+			shortcutKeys = make(map[string]*controllers.ShortcutKey)
+		}
 	} else {
 		keyCounts = make(map[uint16]*controllers.KeyCount)
+		shortcutKeys = make(map[string]*controllers.ShortcutKey)
 	}
+
+	currentKey := make(map[uint16]int64)
 
 	evChan := hook.Start()
 	defer hook.End()
+	shortcutKey := ""
 	for ev := range evChan {
-		if ev.Kind == 5 {
+		if ev.Kind == hook.KeyHold {
+			// 当按下列表不为空并且当前按键不为ctrl、alt、shift、win时
+			if len(currentKey) > 0 && ev.Rawcode != 162 && ev.Rawcode != 164 && ev.Rawcode != 160 && ev.Rawcode != 91 {
+				for u := range currentKey {
+					shortcutKey += fmt.Sprintf("%d+", u)
+				}
+				shortcutKey += fmt.Sprintf("%d", ev.Rawcode)
+				if shortcutKeys[shortcutKey] == nil {
+					shortcutKeys[shortcutKey] = &controllers.ShortcutKey{
+						Count: 1,
+					}
+				} else {
+					shortcutKeys[shortcutKey].Count++
+				}
+
+				shortcutKey = ""
+			}
+			// 如果current_key中没有这个键，就累计按下时间 ( 毫秒 )
+			if _, ok := currentKey[ev.Rawcode]; !ok {
+				currentKey[ev.Rawcode] = time.Now().UnixNano() / 1e6
+			}
+		}
+		if ev.Kind == hook.KeyUp {
+			// 获取按键持续时长
+			using := (time.Now().UnixNano() / 1e6) - currentKey[ev.Rawcode]
+			delete(currentKey, ev.Rawcode)
 			str := string(ev.Rawcode)
-			log.Println(ev.Rawcode)
 			if ev.Rawcode == 112 {
 				str = "F1"
 			} else if ev.Rawcode == 113 {
@@ -165,20 +229,24 @@ func low() {
 
 			if keyCounts[ev.Rawcode] != nil {
 				keyCounts[ev.Rawcode].Count++
+				keyCounts[ev.Rawcode].Using += using
 			} else {
 				keyCounts[ev.Rawcode] = &controllers.KeyCount{
 					RawCode: ev.Rawcode,
 					Name:    str,
 					Count:   1,
+					Using:   using,
 				}
 			}
 			marshal, err := json.Marshal(keyCounts)
+			shortcutKeyMarshal, err := json.Marshal(shortcutKeys)
 			if err != nil {
 				fmt.Println(err)
 			}
 			err = os.WriteFile(keysFile, marshal, 0644)
+			err = os.WriteFile(shortcutKeysFile, shortcutKeyMarshal, 0644)
 			if err != nil {
-				println(err)
+				log.Println(err)
 			}
 		}
 	}
